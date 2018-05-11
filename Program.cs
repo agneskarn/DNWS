@@ -49,34 +49,34 @@ namespace DNWS
 
         public string path
         {
-            get { return _path;}
-            set {_path = value;}
+            get { return _path; }
+            set { _path = value; }
         }
         public string type
         {
-            get { return _type;}
-            set {_type = value;}
+            get { return _type; }
+            set { _type = value; }
         }
         public bool preprocessing
         {
-            get { return _preprocessing;}
-            set {_preprocessing = value;}
+            get { return _preprocessing; }
+            set { _preprocessing = value; }
         }
         public bool postprocessing
         {
-            get { return _postprocessing;}
-            set {_postprocessing = value;}
+            get { return _postprocessing; }
+            set { _postprocessing = value; }
         }
         public IPlugin reference
         {
-            get { return _reference;}
-            set {_reference = value;}
+            get { return _reference; }
+            set { _reference = value; }
         }
 
-        public Dictionary<string,string> parameters
+        public Dictionary<string, string> parameters
         {
-            get {return _parameters;}
-            set {_parameters = value;}
+            get { return _parameters; }
+            set { _parameters = value; }
         }
 
     }
@@ -101,7 +101,8 @@ namespace DNWS
          */
         public static PluginManager GetInstance(Program parent)
         {
-            if (_instance == null) {
+            if (_instance == null)
+            {
                 _instance = new PluginManager();
             }
             _instance.SetParent(parent);
@@ -129,19 +130,26 @@ namespace DNWS
                     pi.type = section["Class"];
                     pi.preprocessing = section["Preprocessing"].ToLower().Equals("true");
                     pi.postprocessing = section["Postprocessing"].ToLower().Equals("true");
-                    foreach(ConfigurationSection parameter in section.GetSection("Parameters").GetChildren()) {
-                        if (parameters == null) parameters = new Dictionary<string,string>();
+                    foreach (ConfigurationSection parameter in section.GetSection("Parameters").GetChildren())
+                    {
+                        if (parameters == null) parameters = new Dictionary<string, string>();
                         parameters[parameter.Key] = parameter.Value;
                     }
-                    try {
-                        if(parameters != null) {
+                    try
+                    {
+                        if (parameters != null)
+                        {
                             IPluginWithParameters ip = (IPluginWithParameters)Activator.CreateInstance(Type.GetType(pi.type));
                             ip.SetParameters(parameters);
-                            pi.reference = (IPlugin) ip;
-                        } else {
+                            pi.reference = (IPlugin)ip;
+                        }
+                        else
+                        {
                             pi.reference = (IPlugin)Activator.CreateInstance(Type.GetType(pi.type));
                         }
-                    } catch (Exception ex) {
+                    }
+                    catch (Exception ex)
+                    {
                         _parent.Log("Error loading plugin " + pi.path + " with error " + ex);
                         continue;
                     }
@@ -237,7 +245,7 @@ namespace DNWS
             HTTPResponse response = null;
             byte[] bytes = new byte[1024];
             int bytesRead;
-            
+
 
             // Read all request
             do
@@ -250,7 +258,8 @@ namespace DNWS
             request.AddProperty("RemoteEndPoint", _client.RemoteEndPoint.ToString());
 
             // We can handle only GET now
-            if(request.Status != 200) {
+            if (request.Status != 200)
+            {
                 response = new HTTPResponse(request.Status);
             }
             else
@@ -260,21 +269,26 @@ namespace DNWS
                 string[] requestUrls = request.Url.Split("/");
                 string[] paths = requestUrls[1].Split("?");
                 // pre processing
-                foreach(KeyValuePair<string, PluginInfo> plugininfo in PM.Plugins) {
-                    if(plugininfo.Value.preprocessing) {
+                foreach (KeyValuePair<string, PluginInfo> plugininfo in PM.Plugins)
+                {
+                    if (plugininfo.Value.preprocessing)
+                    {
                         plugininfo.Value.reference.PreProcessing(request);
                     }
                 }
                 // plugins
-                foreach(KeyValuePair<string, PluginInfo> plugininfo in PM.Plugins) {
-                    if(paths[0].Equals(plugininfo.Key, StringComparison.InvariantCultureIgnoreCase)) {
-                    //if(request.Url.StartsWith("/" + plugininfo.Key)) {
+                foreach (KeyValuePair<string, PluginInfo> plugininfo in PM.Plugins)
+                {
+                    if (paths[0].Equals(plugininfo.Key, StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        //if(request.Url.StartsWith("/" + plugininfo.Key)) {
                         response = plugininfo.Value.reference.GetResponse(request);
                         processed = true;
                     }
                 }
                 // local file
-                if(!processed) {
+                if (!processed)
+                {
                     if (request.Filename.Equals(""))
                     {
                         response = getFile(ROOT + "/" + request.Url + "/index.html");
@@ -285,16 +299,19 @@ namespace DNWS
                     }
                 }
                 // post processing pipe
-                foreach(KeyValuePair<string, PluginInfo> plugininfo in PM.Plugins) {
-                    if(plugininfo.Value.postprocessing) {
+                foreach (KeyValuePair<string, PluginInfo> plugininfo in PM.Plugins)
+                {
+                    if (plugininfo.Value.postprocessing)
+                    {
                         response = plugininfo.Value.reference.PostProcessing(response);
                     }
                 }
             }
             // Generate response
             ns.Write(Encoding.UTF8.GetBytes(response.Header), 0, response.Header.Length);
-            if(response.Body != null) {
-              ns.Write(response.Body, 0, response.Body.Length);
+            if (response.Body != null)
+            {
+                ns.Write(response.Body, 0, response.Body.Length);
             }
 
             // Shuting down
@@ -308,10 +325,10 @@ namespace DNWS
     public class TaskInfo
     {
         private HTTPProcessor _hp;
-        public HTTPProcessor hp 
-        { 
-            get {return _hp;}
-            set {_hp = value;}
+        public HTTPProcessor hp
+        {
+            get { return _hp; }
+            set { _hp = value; }
         }
         public TaskInfo(HTTPProcessor hp)
         {
@@ -364,7 +381,8 @@ namespace DNWS
         /// </summary>
         public void Start()
         {
-            while (true) {
+            while (true)
+            {
                 try
                 {
                     // Create listening socket, queue size is 5 now.
@@ -376,7 +394,8 @@ namespace DNWS
                     _parent.Log("Server started at port " + _port + ".");
                     _threadModel = Program.Configuration["ThreadModel"];
                     _parent.Log("Thread model is " + _threadModel);
-                    if (_threadModel is "Pool") {
+                    if (_threadModel is "Pool")
+                    {
                         _maxThread = Convert.ToInt32(Program.Configuration["ThreadPoolSize"]);
                         // https://msdn.microsoft.com/en-us/library/system.threading.threadpool.setmaxthreads(v=vs.110).aspx#Remarks
                         if (_maxThread < Environment.ProcessorCount)
@@ -390,7 +409,7 @@ namespace DNWS
                             _maxThread = (minWorker < minIOC) ? minIOC : minWorker;
                         }
                         ThreadPool.SetMaxThreads(_maxThread, _maxThread);
-                        _parent.Log("Max pool size is " +_maxThread);
+                        _parent.Log("Max pool size is " + _maxThread);
                     }
                     break;
                 }
@@ -401,13 +420,20 @@ namespace DNWS
                 }
                 _port = _port + 1;
             }
-            if (_threadModel is "Single") {
+            if (_threadModel is "Single")
+            {
                 MainLoopSingleThread();
-            } else if(_threadModel is "Multi") {
+            }
+            else if (_threadModel is "Multi")
+            {
                 MainLoopMultiThread();
-            } else if(_threadModel is "Pool") {
+            }
+            else if (_threadModel is "Pool")
+            {
                 MainLoopThreadPool();
-            } else {
+            }
+            else
+            {
                 _parent.Log("Server starting error: unknown thread model\n");
             }
         }
